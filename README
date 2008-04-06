@@ -1,0 +1,76 @@
+NAME
+    Sub::Prototype::Util - Prototypes-related utility routines.
+
+VERSION
+    Version 0.01
+
+SYNOPSIS
+        use Sub::Prototype::Util qw/flatten recall/;
+
+        my @a = qw/a b c/;
+        my @args = ( \@a, 1, { d => 2 }, undef, 3 );
+
+        my @flat = flatten '\@$;$', @args; # ('a', 'b', 'c', 1, { d => 2 })
+        recall 'CORE::push', @args; # @a contains 'a', 'b', 'c', 1, { d => 2 }, undef, 3
+
+DESCRIPTION
+    Prototypes are evil, but sometimes you just have to bear with them,
+    especially when messing with core functions. This module provides
+    several utilities aimed at faciliting "overloading" of prototyped
+    functions.
+
+    They all handle 5.10's "_" prototype.
+
+FUNCTIONS
+  "flatten $proto, @args"
+    Flattens the array @args according to the prototype $proto. When @args
+    is what @_ is after calling a subroutine with prototype $proto,
+    "flatten" returns the list of what @_ would have been if there were no
+    prototype.
+
+  "recall $name, @args"
+    Calls the function $name with the prototyped argument list @args. That
+    is, @args should be what @_ is when you define a subroutine with the
+    same prototype as $name. For example,
+
+        my $a = [ ];
+        recall 'CORE::push', $a, 1, 2, 3;
+
+    will call "push @$a, 1, 2, 3" and so fill the arrayref $a with "1, 2,
+    3". This is especially needed for core functions because you can't
+    "goto" into them.
+
+EXPORT
+    The functions "flatten" and "recall" are only exported on request,
+    either by providing their name or by the ':consts' and ':all' tags.
+
+DEPENDENCIES
+    Carp (core module since perl 5), Scalar::Util (since 5.7.3).
+
+AUTHOR
+    Vincent Pit, "<perl at profvince.com>", <http://www.profvince.com>.
+
+    You can contact me by mail or on #perl @ FreeNode (vincent or
+    Prof_Vince).
+
+BUGS
+    Please report any bugs or feature requests to "bug-sub-prototype-util at
+    rt.cpan.org", or through the web interface at
+    <http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Sub-Prototype-Util>. I
+    will be notified, and then you'll automatically be notified of progress
+    on your bug as I make changes.
+
+SUPPORT
+    You can find documentation for this module with the perldoc command.
+
+        perldoc Sub::Prototype::Util
+
+    Tests code coverage report is available at
+    <http://www.profvince.com/perl/cover/Sub-Prototype-Util>.
+
+COPYRIGHT & LICENSE
+    Copyright 2008 Vincent Pit, all rights reserved.
+
+    This program is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself.
+
