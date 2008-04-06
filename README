@@ -1,8 +1,8 @@
 NAME
-    Sub::Prototype::Util - Prototypes-related utility routines.
+    Sub::Prototype::Util - Prototype-related utility routines.
 
 VERSION
-    Version 0.01
+    Version 0.02
 
 SYNOPSIS
         use Sub::Prototype::Util qw/flatten recall/;
@@ -16,7 +16,7 @@ SYNOPSIS
 DESCRIPTION
     Prototypes are evil, but sometimes you just have to bear with them,
     especially when messing with core functions. This module provides
-    several utilities aimed at faciliting "overloading" of prototyped
+    several utilities aimed at facilitating "overloading" of prototyped
     functions.
 
     They all handle 5.10's "_" prototype.
@@ -42,10 +42,10 @@ FUNCTIONS
 
 EXPORT
     The functions "flatten" and "recall" are only exported on request,
-    either by providing their name or by the ':consts' and ':all' tags.
+    either by providing their name or by the ':funcs' and ':all' tags.
 
 DEPENDENCIES
-    Carp (core module since perl 5), Scalar::Util (since 5.7.3).
+    Carp, Exporter (core modules since perl 5), Scalar::Util (since 5.7.3).
 
 AUTHOR
     Vincent Pit, "<perl at profvince.com>", <http://www.profvince.com>.

@@ -21,6 +21,7 @@ sub build_req {
 WriteMakefile(
     NAME          => 'Sub::Prototype::Util',
     AUTHOR        => 'Vincent Pit <perl@profvince.com>',
+    LICENSE       => 'perl',
     VERSION_FROM  => 'lib/Sub/Prototype/Util.pm',
     ABSTRACT_FROM => 'lib/Sub/Prototype/Util.pm',
     PL_FILES      => {},

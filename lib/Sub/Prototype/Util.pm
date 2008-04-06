@@ -8,15 +8,15 @@ use Scalar::Util qw/reftype/;
 
 =head1 NAME
 
-Sub::Prototype::Util - Prototypes-related utility routines.
+Sub::Prototype::Util - Prototype-related utility routines.
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 
@@ -30,7 +30,7 @@ our $VERSION = '0.01';
 
 =head1 DESCRIPTION
 
-Prototypes are evil, but sometimes you just have to bear with them, especially when messing with core functions. This module provides several utilities aimed at faciliting "overloading" of prototyped functions.
+Prototypes are evil, but sometimes you just have to bear with them, especially when messing with core functions. This module provides several utilities aimed at facilitating "overloading" of prototyped functions.
 
 They all handle C<5.10>'s C<_> prototype.
 
@@ -134,7 +134,7 @@ sub recall {
 
 =head1 EXPORT
 
-The functions L</flatten> and L</recall> are only exported on request, either by providing their name or by the C<':consts'> and C<':all'> tags.
+The functions L</flatten> and L</recall> are only exported on request, either by providing their name or by the C<':funcs'> and C<':all'> tags.
 
 =cut
 
@@ -149,7 +149,7 @@ $EXPORT_TAGS{'all'} = [ @EXPORT_OK ];
 
 =head1 DEPENDENCIES
 
-L<Carp> (core module since perl 5), L<Scalar::Util> (since 5.7.3).
+L<Carp>, L<Exporter> (core modules since perl 5), L<Scalar::Util> (since 5.7.3).
 
 =head1 AUTHOR
 

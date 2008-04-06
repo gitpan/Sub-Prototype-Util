@@ -1,8 +1,8 @@
 --- #YAML:1.0
 name:                Sub-Prototype-Util
-version:             0.01
-abstract:            Prototypes-related utility routines.
-license:             ~
+version:             0.02
+abstract:            Prototype-related utility routines.
+license:             perl
 author:              
     - Vincent Pit <perl@profvince.com>
 generated_by:        ExtUtils::MakeMaker version 6.42
