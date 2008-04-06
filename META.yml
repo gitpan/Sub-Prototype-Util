@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                Sub-Prototype-Util
-version:             0.02
+version:             0.03
 abstract:            Prototype-related utility routines.
 license:             perl
 author:              

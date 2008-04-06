@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 26;
+use Test::More tests => 27;
 
 use Sub::Prototype::Util qw/flatten/;
 
@@ -40,9 +40,10 @@ my @tests = (
  [ '\&$',      'coderef', [ \&main::hlagh,  1 ], [ 'HLAGH',   1 ] ],
  [ '\[$@%]',   'class got scalarref',    [ \1 ], [ 1 ] ],
  [ '\[$@%]',   'class got arrayref',  [ [ 1 ] ], [ 1 ] ],
- [ '\[$@%]',   'class got hashref', [ { 1,2 } ], [ 1, 2 ] ]
+ [ '\[$@%]',   'class got hashref', [ { 1,2 } ], [ 1, 2 ] ],
+ [ '_',        '_ with argument',      [ 1, 2 ], [ 1 ] ]
 );
-my $l = [ '_', '$_', [ ] ];
+my $l = [ '_', '_ with no argument', [ ] ];
 $l->[3] = [ $l ];
 push @tests, $l;
 

@@ -1,5 +1,10 @@
 Revision history for Sub-Prototype-Util
 
+0.03    2008-04-06 22:20 UTC
+        + Fix : our doesn't exist in 5.005 (sigh).
+        + Fix : '_' prototype should use the current argument when it's
+                available and only resort to $_ when it's not.
+
 0.02    2008-04-06 16:40 UTC
         + Fix : Missing LICENSE in Makefile.PL.
         + Fix : Typos in POD.

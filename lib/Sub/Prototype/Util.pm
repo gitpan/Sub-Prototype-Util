@@ -12,11 +12,13 @@ Sub::Prototype::Util - Prototype-related utility routines.
 
 =head1 VERSION
 
-Version 0.02
+Version 0.03
 
 =cut
 
-our $VERSION = '0.02';
+use vars qw/$VERSION/;
+
+$VERSION = '0.03';
 
 =head1 SYNOPSIS
 
@@ -78,7 +80,7 @@ sub flatten {
   } elsif ($p =~ /[\@\%]/) {
    push @args, @_;
    last;
-  } elsif ($p eq '_') {
+  } elsif ($p eq '_' && @_ == 0) {
    push @args, $_;
   } else {
    push @args, shift;
@@ -117,7 +119,7 @@ sub recall {
     last;
    } elsif ($p =~ /\&/) {
     push @args, 'sub{&{$a[' . $i . ']}}';
-   } elsif ($p eq '_') {
+   } elsif ($p eq '_' && $i >= @a) {
     push @args, '$_';
    } else {
     push @args, '$a[' . $i . ']';

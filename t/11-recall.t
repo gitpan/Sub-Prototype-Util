@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 3 + 12 + (($^V ge v5.10.0) ? 2 : 0);
+use Test::More tests => 3 + 12 + (($^V ge v5.10.0) ? 4 : 0);
 
 use Scalar::Util qw/set_prototype/;
 use Sub::Prototype::Util qw/recall/;
@@ -29,10 +29,15 @@ my @tests = (
  [ 'main::mygrep1', 'grep1', $g, $g, [ 3 .. 5 ] ],
  [ 'main::mygrep2', 'grep2', $g, $g, [ 3 .. 5 ] ],
 );
-sub myit { push @{$_->[2]}, 1; return 2 };
+sub myit { push @{$_[0]->[2]}, 3; return 4 };
 if ($^V ge v5.10.0) {
  set_prototype \&myit, '_';
- push @tests, [ 'main::myit', '_ prototype', [ ], [ 1 ], [ 2 ] ];
+ push @tests, [ 'main::myit', '_ with argument',
+                [ [ 1, 2, [ ] ], 5 ],
+                [ [ 1, 2, [ 3 ] ], 5 ],
+                [ 4 ]
+              ];
+ push @tests, [ 'main::myit', '_ with no argument', [ ], [ 3 ], [ 4 ] ];
 }
 
 for (@tests) {

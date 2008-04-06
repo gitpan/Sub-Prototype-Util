@@ -2,7 +2,7 @@ NAME
     Sub::Prototype::Util - Prototype-related utility routines.
 
 VERSION
-    Version 0.02
+    Version 0.03
 
 SYNOPSIS
         use Sub::Prototype::Util qw/flatten recall/;
