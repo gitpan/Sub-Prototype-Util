@@ -1,5 +1,11 @@
 Revision history for Sub-Prototype-Util
 
+0.04    2008-04-09 13:25 UTC
+        + Fix : recall() should pass by reference as much as possible, or we
+                won't be able to apply it to functions that modify their
+                arguments (e.g. open()).
+        + Fix : our really doesn't exist in 5.005.
+
 0.03    2008-04-06 22:20 UTC
         + Fix : our doesn't exist in 5.005 (sigh).
         + Fix : '_' prototype should use the current argument when it's

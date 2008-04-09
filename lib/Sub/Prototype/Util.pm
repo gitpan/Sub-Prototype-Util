@@ -12,13 +12,13 @@ Sub::Prototype::Util - Prototype-related utility routines.
 
 =head1 VERSION
 
-Version 0.03
+Version 0.04
 
 =cut
 
 use vars qw/$VERSION/;
 
-$VERSION = '0.03';
+$VERSION = '0.04';
 
 =head1 SYNOPSIS
 
@@ -101,33 +101,35 @@ will call C<push @$a, 1, 2, 3> and so fill the arrayref C<$a> with C<1, 2, 3>. T
 =cut
 
 sub recall {
- my ($name, @a) = @_;
+ my $name = shift;
  croak 'Wrong subroutine name' unless $name;
  $name =~ s/^\s+//;
  $name =~ s/[\s\$\@\%\*\&;].*//;
  my $proto = prototype $name;
  my @args;
+ my @cr;
  if (defined $proto) {
   my $i = 0;
   while ($proto =~ /(\\?)(\[[^\]]+\]|[^\];])/g) {
    my $p = $2;
    if ($1) {
-    my $r = _check_ref $a[$i], $p;
-    push @args, join '', $sigils{$r}, '{$a[', $i, ']}';
+    my $r = _check_ref $_[$i], $p;
+    push @args, join '', $sigils{$r}, '{$_[', $i, ']}';
    } elsif ($p =~ /[\@\%]/) {
-    push @args, join '', '@a[', $i, '..', (@a - 1), ']';
+    push @args, join '', '@_[', $i, '..', (@_ - 1), ']';
     last;
    } elsif ($p =~ /\&/) {
-    push @args, 'sub{&{$a[' . $i . ']}}';
-   } elsif ($p eq '_' && $i >= @a) {
+    push @cr, $_[$i];
+    push @args, 'sub{&{$cr[' . $#cr . ']}}';
+   } elsif ($p eq '_' && $i >= @_) {
     push @args, '$_';
    } else {
-    push @args, '$a[' . $i . ']';
+    push @args, '$_[' . $i . ']';
    }
    ++$i; 
   }
  } else {
-  @args = map '$a[' . $_ . ']', 0 .. @a - 1;
+  @args = map '$_[' . $_ . ']', 0 .. @_ - 1;
  }
  my @ret = eval $name . '(' . join(',', @args) . ');';
  croak $@ if $@;
@@ -142,11 +144,13 @@ The functions L</flatten> and L</recall> are only exported on request, either by
 
 use base qw/Exporter/;
 
-our @EXPORT         = ();
-our %EXPORT_TAGS    = (
+use vars qw/@EXPORT @EXPORT_OK %EXPORT_TAGS/;
+
+@EXPORT             = ();
+%EXPORT_TAGS        = (
  'funcs' =>  [ qw/flatten recall/ ]
 );
-our @EXPORT_OK      = map { @$_ } values %EXPORT_TAGS;
+@EXPORT_OK          = map { @$_ } values %EXPORT_TAGS;
 $EXPORT_TAGS{'all'} = [ @EXPORT_OK ];
 
 =head1 DEPENDENCIES

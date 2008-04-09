@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 3 + 12 + (($^V ge v5.10.0) ? 4 : 0);
+use Test::More tests => 3 + 14 + (($^V ge v5.10.0) ? 4 : 0);
 
 use Scalar::Util qw/set_prototype/;
 use Sub::Prototype::Util qw/recall/;
@@ -16,11 +16,14 @@ eval { recall 'hlagh' };
 like($@, qr/^Undefined\s+subroutine/, 'recall <unknown> croaks');
 
 sub noproto { $_[1], $_[0] }
-sub mytrunc ($;$) { $_[1], $_[0] };
-sub mygrep1 (&@) { grep { $_[0]->() } @_[1 .. $#_] };
-sub mygrep2 (\&@) { grep { $_[0]->() } @_[1 .. $#_] };
+sub mytrunc ($;$) { $_[1], $_[0] }
+sub mygrep1 (&@) { grep { $_[0]->() } @_[1 .. $#_] }
+sub mygrep2 (\&@) { grep { $_[0]->() } @_[1 .. $#_] }
+sub modify ($) { my $old = $_[0]; $_[0] = 5; $old }
+
 my $t = [ 1, 2, 3, 4 ];
 my $g = [ sub { $_ > 2 }, 1 .. 5 ];
+
 my @tests = (
  [ 'main::noproto', 'no prototype', $t, $t, [ 2, 1 ] ],
  [ 'CORE::push', 'push', [ [ 1, 2 ], 3, 5 ], [ [ 1, 2, 3, 5 ], 3, 5 ], [ 4 ] ],
@@ -28,7 +31,9 @@ my @tests = (
  [ 'main::mytrunc', 'truncate 2', $t, $t, [ 2, 1 ] ],
  [ 'main::mygrep1', 'grep1', $g, $g, [ 3 .. 5 ] ],
  [ 'main::mygrep2', 'grep2', $g, $g, [ 3 .. 5 ] ],
+ [ 'main::modify', 'modify arguments', [ 1 ], [ 5 ], [ 1 ] ],
 );
+
 sub myit { push @{$_[0]->[2]}, 3; return 4 };
 if ($^V ge v5.10.0) {
  set_prototype \&myit, '_';
