@@ -2,7 +2,7 @@ NAME
     Sub::Prototype::Util - Prototype-related utility routines.
 
 VERSION
-    Version 0.04
+    Version 0.05
 
 SYNOPSIS
         use Sub::Prototype::Util qw/flatten recall/;
@@ -39,6 +39,18 @@ FUNCTIONS
     will call "push @$a, 1, 2, 3" and so fill the arrayref $a with "1, 2,
     3". This is especially needed for core functions because you can't
     "goto" into them.
+
+    You can also force the use of a specific prototype. In this case, $name
+    must be a hash reference that holds exactly one key/value pair, the key
+    being the function name and the value the prototpye that should be used
+    to call it.
+
+        recall { 'CORE::push' => '\@$' }, $a, 1, 2, 3; # will only push 1
+
+    This allows you to recall into "CORE::grep" and "CORE::map" by using the
+    "\&@" prototype :
+
+        sub mygrep (&@) { recall { 'CORE::grep' => '\&@' }, @_ } # the prototypes are intentionally different
 
 EXPORT
     The functions "flatten" and "recall" are only exported on request,

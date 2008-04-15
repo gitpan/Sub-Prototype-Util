@@ -1,5 +1,9 @@
 Revision history for Sub-Prototype-Util
 
+0.05    2008-04-15 09:45 UTC
+        + Add : You can now specify which prototype to use with recall(). This
+                is needed to be able to recall into CORE::{grep,map}.
+
 0.04    2008-04-09 13:25 UTC
         + Fix : recall() should pass by reference as much as possible, or we
                 won't be able to apply it to functions that modify their

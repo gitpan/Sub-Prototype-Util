@@ -12,13 +12,13 @@ Sub::Prototype::Util - Prototype-related utility routines.
 
 =head1 VERSION
 
-Version 0.04
+Version 0.05
 
 =cut
 
 use vars qw/$VERSION/;
 
-$VERSION = '0.04';
+$VERSION = '0.05';
 
 =head1 SYNOPSIS
 
@@ -98,15 +98,31 @@ Calls the function C<$name> with the prototyped argument list C<@args>. That is,
 
 will call C<push @$a, 1, 2, 3> and so fill the arrayref C<$a> with C<1, 2, 3>. This is especially needed for core functions because you can't C<goto> into them.
 
+You can also force the use of a specific prototype. In this case, C<$name> must be a hash reference that holds exactly one key/value pair, the key being the function name and the value the prototpye that should be used to call it.
+
+    recall { 'CORE::push' => '\@$' }, $a, 1, 2, 3; # will only push 1
+
+This allows you to recall into C<CORE::grep> and C<CORE::map> by using the C<\&@> prototype :
+
+    sub mygrep (&@) { recall { 'CORE::grep' => '\&@' }, @_ } # the prototypes are intentionally different
+
 =cut
 
 sub recall {
  my $name = shift;
- croak 'Wrong subroutine name' unless $name;
+ croak 'No subroutine specified' unless $name;
+ my $proto;
+ my $r = ref $name;
+ if ($r eq 'HASH') {
+  croak 'Forced prototype hash reference must contain exactly one key/value pair' unless keys %$name == 1;
+  ($name, $proto) = %$name;
+ } elsif (length $r) {
+  croak 'Unhandled ' . $r . ' reference as first argument';
+ }
  $name =~ s/^\s+//;
  $name =~ s/[\s\$\@\%\*\&;].*//;
- my $proto = prototype $name;
- my @args;
+ $proto = prototype $name unless $proto;
+ my $call = $name . '(';
  my @cr;
  if (defined $proto) {
   my $i = 0;
@@ -114,24 +130,26 @@ sub recall {
    my $p = $2;
    if ($1) {
     my $r = _check_ref $_[$i], $p;
-    push @args, join '', $sigils{$r}, '{$_[', $i, ']}';
+    $call .= $sigils{$r} . '{$_[' . $i . ']},';
    } elsif ($p =~ /[\@\%]/) {
-    push @args, join '', '@_[', $i, '..', (@_ - 1), ']';
+    $call .= '@_[' . $i . '..' . (@_ - 1) . ']';
     last;
    } elsif ($p =~ /\&/) {
     push @cr, $_[$i];
-    push @args, 'sub{&{$cr[' . $#cr . ']}}';
+    $call .= 'sub{&{$cr[' . $#cr . ']}},';
    } elsif ($p eq '_' && $i >= @_) {
-    push @args, '$_';
+    $call .= '$_,';
    } else {
-    push @args, '$_[' . $i . ']';
+    $call .= '$_[' . $i . '],';
    }
    ++$i; 
   }
+  $call =~ s/,$//;
  } else {
-  @args = map '$_[' . $_ . ']', 0 .. @_ - 1;
+  $call .= join ',', map '$_[' . $_ . ']', 0 .. @_ - 1;
  }
- my @ret = eval $name . '(' . join(',', @args) . ');';
+ $call .= ');';
+ my @ret = eval $call;
  croak $@ if $@;
  return @ret;
 }
