@@ -8,6 +8,7 @@ t/00-load.t
 t/01-import.t
 t/10-flatten.t
 t/11-recall.t
+t/12-wrap.t
 t/90-boilerplate.t
 t/91-pod.t
 t/92-pod-coverage.t

@@ -1,5 +1,8 @@
 Revision history for Sub-Prototype-Util
 
+0.06    2008-04-20 16:20 UTC
+        + Add : The wrap() function.
+
 0.05    2008-04-15 09:45 UTC
         + Add : You can now specify which prototype to use with recall(). This
                 is needed to be able to recall into CORE::{grep,map}.
