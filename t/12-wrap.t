@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 7 + 6 + 3 + 1 + 6 + 1 + (($^V ge v5.10.0) ? 2 : 0);
+use Test::More tests => 7 + 6 + 3 + 1 + 6 + 1 + (($^V ge v5.10.0) ? 2 : 0) + 1;
 
 use Scalar::Util qw/set_prototype/;
 use Sub::Prototype::Util qw/wrap/;
@@ -73,7 +73,7 @@ is($cb,
             q!} }!),
     'callbacks');
 
-sub myref ($) { ref $_[0] };
+sub myref { ref $_[0] };
 
 sub cat (\[$@]\[$@]) {
  if (ref $_[0] eq 'SCALAR') {
@@ -91,22 +91,27 @@ sub cat (\[$@]\[$@]) {
  }
 }
 
-my $cat = wrap 'main::cat', ref => 'main::myref', wrong_ref => 'die "hlagh"',
-                            sub => 1, compile => 1,
-my @tests = (
- [ \'a',        \'b',        [ 'ab' ],        'scalar-scalar' ],
- [ \'c',        [ qw/d e/ ], [ qw/c d e/ ],   'scalar-array' ],
- [ [ qw/f g/ ], \'h',        [ qw/f g h/ ],   'array-scalar' ],
- [ [ qw/i j/ ], [ qw/k l/ ], [ qw/i j k l/ ], 'array-array' ]
-);
-for (@tests) {
- my $res = [ $cat->($_->[0], $_->[1]) ];
- is_deeply($res, $_->[2], 'cat ' . $_->[3]);
+SKIP: {
+ skip 'perl 5.8.x is needed to test execution of \[$@] prototypes' => 6
+   if $^V lt v5.8.0;
+
+ my $cat = wrap 'main::cat', ref => 'main::myref', wrong_ref => 'die "hlagh"',
+                             sub => 1, compile => 1;
+ my @tests = (
+  [ \'a',        \'b',        [ 'ab' ],        'scalar-scalar' ],
+  [ \'c',        [ qw/d e/ ], [ qw/c d e/ ],   'scalar-array' ],
+  [ [ qw/f g/ ], \'h',        [ qw/f g h/ ],   'array-scalar' ],
+  [ [ qw/i j/ ], [ qw/k l/ ], [ qw/i j k l/ ], 'array-array' ]
+ );
+ for (@tests) {
+  my $res = [ $cat->($_->[0], $_->[1]) ];
+  is_deeply($res, $_->[2], 'cat ' . $_->[3]);
+ }
+ eval { $cat->({ foo => 1 }, [ 2 ] ) };
+ like($@, qr/^hlagh\s+at/, 'wrong reference type 1');
+ eval { $cat->(\1, sub { 2 } ) };
+ like($@, qr/^hlagh\s+at/, 'wrong reference type 2');
 }
-eval { $cat->({ foo => 1 }, [ 2 ] ) };
-like($@, qr/^hlagh\s+at/, 'wrong reference type 1');
-eval { $cat->(\1, sub { 2 } ) };
-like($@, qr/^hlagh\s+at/, 'wrong reference type 2');
 
 sub noproto;
 my $noproto_exp = '{ main::noproto(@_) }';
@@ -124,3 +129,6 @@ if ($^V ge v5.10.0) {
  $it->(\@a, 6);
  is_deeply(\@a, [ qw/u v w/, 3, 4, 6, 7 ], '_ without arguments');
 }
+
+eval { wrap { 'main::dummy' => '\[@%]' }, ref => 'shift', compile => 1 };
+like($@, qr/to\s+shift\s+must\s+be\s+array/, 'invalid eval code croaks');

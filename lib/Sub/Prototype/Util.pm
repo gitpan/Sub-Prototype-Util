@@ -12,23 +12,25 @@ Sub::Prototype::Util - Prototype-related utility routines.
 
 =head1 VERSION
 
-Version 0.06
+Version 0.07
 
 =cut
 
 use vars qw/$VERSION/;
 
-$VERSION = '0.06';
+$VERSION = '0.07';
 
 =head1 SYNOPSIS
 
-    use Sub::Prototype::Util qw/flatten recall/;
+    use Sub::Prototype::Util qw/flatten recall wrap/;
 
     my @a = qw/a b c/;
     my @args = ( \@a, 1, { d => 2 }, undef, 3 );
 
     my @flat = flatten '\@$;$', @args; # ('a', 'b', 'c', 1, { d => 2 })
     recall 'CORE::push', @args; # @a contains 'a', 'b', 'c', 1, { d => 2 }, undef, 3
+    my $splice = wrap 'CORE::splice', compile => 1;
+    my @b = $splice->(\@a, 4, 2); # @a is now ('a', 'b', 'c', 1, 3) and @b is ({ d => 2 }, undef)
 
 =head1 DESCRIPTION
 
@@ -198,20 +200,21 @@ sub _wrap {
   my ($ref, $p) = ($1, $2);
   $proto = $3;
   $p = $1 if $p =~ /^\[([^\]]+)\]/;
+  my $cur = '$_[' . $i . ']';
   if ($ref) {
    if (length $p > 1) {
-    return 'my $r = ' . $opts->{ref} . '($_[' . $i . ']); ' 
+    return 'my $r = ' . $opts->{ref} . '(' . $cur . '); ' 
            . join ' els',
               map( {
                "if (\$r eq '" . $reftypes{$_} ."') { "
                . _wrap($name, $proto, ($i + 1),
-                              $args . $_ . '{$_[' . $i . ']}, ',
+                              $args . $_ . '{' . $cur . '}, ',
                               $cr, $opts)
                . ' }'
               } split //, $p),
               'e { ' . $opts->{wrong_ref} . ' }'
    } else {
-    $args .= $p . '{$_[' . $i . ']}, ';
+    $args .= $p . '{' . $cur . '}, ';
    }
   } elsif ($p =~ /[\@\%]/) {
    $args .= '@_[' . $i . '..$#_]';
@@ -226,9 +229,9 @@ sub _wrap {
    }
    $args .= 'sub{&{$c[' . $j . ']}}, ';
   } elsif ($p eq '_') {
-   $args .= '((@_ > ' . $i . ') ? $_[' . $i . '] : $_), ';
+   $args .= '((@_ > ' . $i . ') ? ' . $cur . ' : $_), ';
   } else {
-   $args .= '$_[' . $i . '], ';
+   $args .= $cur . ', ';
   }
   return _wrap($name, $proto, ($i + 1), $args, $cr, $opts);
  } else {
@@ -258,7 +261,10 @@ sub wrap {
  }
  $call = '{ ' . $call . ' }';
  $call = 'sub ' . $call if $opts{sub};
- $call = eval $call     if $opts{compile};
+ if ($opts{compile}) {
+  $call = eval $call;
+  croak $@ if $@;
+ }
  return $call;
 }
 
