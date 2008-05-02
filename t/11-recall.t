@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 7 + 18 + (($^V ge v5.10.0) ? 4 : 0);
+use Test::More tests => 7 + 20 + (($^V ge v5.10.0) ? 4 : 0);
 
 use Scalar::Util qw/set_prototype/;
 use Sub::Prototype::Util qw/recall/;
@@ -35,7 +35,8 @@ my $g = [ sub { $_ > 2 }, 1 .. 5 ];
 
 my @tests = (
  [ 'main::noproto', 'no prototype', $t, $t, [ 2, 1 ] ],
- [ { 'CORE::push' => undef }, 'push', [ [ 1, 2 ], 3, 5 ], [ [ 1, 2, 3, 5 ], 3, 5 ], [ 4 ] ],
+ [ { 'main::noproto' => undef }, 'no prototype forced', $t, $t, [ 2, 1 ] ],
+ [ 'CORE::push', 'push', [ [ 1, 2 ], 3, 5 ], [ [ 1, 2, 3, 5 ], 3, 5 ], [ 4 ] ],
  [ { 'CORE::push' => '\@$' }, 'push just one', [ [ 1, 2 ], 3, 5 ], [ [ 1, 2, 3 ], 3, 5 ], [ 3 ] ],
  [ { 'CORE::map' => '\&@' }, 'map', $m, $m, [ 11 .. 15 ] ],
  [ 'main::mytrunc', 'truncate 1', [ 1 ], [ 1 ], [ undef, 1 ] ],

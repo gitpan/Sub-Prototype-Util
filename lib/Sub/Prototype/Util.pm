@@ -12,13 +12,13 @@ Sub::Prototype::Util - Prototype-related utility routines.
 
 =head1 VERSION
 
-Version 0.07
+Version 0.08
 
 =cut
 
 use vars qw/$VERSION/;
 
-$VERSION = '0.07';
+$VERSION = '0.08';
 
 =head1 SYNOPSIS
 
@@ -116,15 +116,16 @@ sub _check_name {
  croak 'No subroutine specified' unless $name;
  my $proto;
  my $r = ref $name;
- if ($r eq 'HASH') {
+ if (!$r) {
+  $proto = prototype $name;
+ } elsif ($r eq 'HASH') {
   croak 'Forced prototype hash reference must contain exactly one key/value pair' unless keys %$name == 1;
   ($name, $proto) = %$name;
- } elsif (length $r) {
+ } else {
   croak 'Unhandled ' . $r . ' reference as first argument';
  }
  $name =~ s/^\s+//;
  $name =~ s/[\s\$\@\%\*\&;].*//;
- $proto = prototype $name unless $proto;
  return $name, $proto;
 }
 
