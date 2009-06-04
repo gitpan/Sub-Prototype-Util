@@ -22,7 +22,7 @@ print "When flatten with prototype $proto, this gives :\n", Dumper(\@flat);
 recall 'CORE::push', @args; # @a contains 'a', 'b', 'c', 1, { d => 2 }, undef, 3
 print "After recalling CORE::push with \@args, \@a contains :\n", Dumper(\@a);
 
-my $splice = wrap 'CORE::splice', compile => 1;
+my $splice = wrap 'CORE::splice';
 my @b = $splice->(\@a, 4, 2);
 print "After calling wrapped splice with \@a, it contains :\n", Dumper(\@a);
 print "What was returned :\n", Dumper(\@b);

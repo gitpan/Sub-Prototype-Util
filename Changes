@@ -1,5 +1,14 @@
 Revision history for Sub-Prototype-Util
 
+0.09    2009-06-04 22:45 UTC
+        + Chg : recall() was reimplemented in terms of wrap().
+        + Chg : "compile => 1" is now the default for wrap.
+        + Fix : Croak messages are now relative to the caller.
+        + Fix : flatten() croaks when not enough arguments were given to match
+                the prototype.
+        + Upd : Resources in META.yml.
+        + Upd : META.yml spec updated to 1.4.
+
 0.08    2008-05-02 15:25 UTC
         + Fix : "{ $func => undef }" (resp. "=> ''") should enforce no prototype
                 (resp. enforce an empty prototype).

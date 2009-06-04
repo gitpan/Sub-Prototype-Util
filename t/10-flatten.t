@@ -7,14 +7,24 @@ use Test::More tests => 27;
 
 use Sub::Prototype::Util qw/flatten/;
 
+sub exception {
+ my ($msg) = @_;
+ $msg =~ s/\s+/\\s+/g;
+ return qr/^$msg.*?at\s+\Q$0\E\s+line\s+\d+/;
+}
+
+eval { flatten '$' };
+like $@, exception('Not enough arguments to match this prototype'),
+                                                          'flatten("$") croaks';
 eval { flatten '\@', undef };
-like($@, qr/^Got\s+undef/, 'flatten "\@", undef croaks');
+like $@, exception('Got undef'), 'flatten "\@", undef croaks';
 eval { flatten '\@', 1 };
-like($@, qr/^Got\s+a\s+plain\s+scalar/, 'flatten "\@", scalar croaks');
+like $@, exception('Got a plain scalar'), 'flatten "\@", scalar croaks';
 eval { flatten '\@', { foo => 1 } };
-like($@, qr/^Unexpected\s+HASH\s+reference/, 'flatten "\@", hashref croaks');
+like $@, exception('Unexpected HASH reference'), 'flatten "\@", hashref croaks';
 eval { flatten '\@', \(\1) };
-like($@, qr/^Unexpected\s+REF\s+reference/, 'flatten "\@", double ref croaks');
+like $@, exception('Unexpected REF reference'),
+                                              'flatten "\@", double ref croaks';
 
 my $a = [ 1, 2, 3 ];
 my $b = [ [ 1, 2 ], 3, { 4 => 5 }, undef, \6 ];
@@ -41,10 +51,7 @@ my @tests = (
  [ '\[$@%]',   'class got scalarref',    [ \1 ], [ 1 ] ],
  [ '\[$@%]',   'class got arrayref',  [ [ 1 ] ], [ 1 ] ],
  [ '\[$@%]',   'class got hashref', [ { 1,2 } ], [ 1, 2 ] ],
- [ '_',        '_ with argument',      [ 1, 2 ], [ 1 ] ]
+ [ '_',        '_ with argument',      [ 1, 2 ], [ 1 ] ],
 );
-my $l = [ '_', '_ with no argument', [ ] ];
-$l->[3] = [ $l ];
-push @tests, $l;
 
 is_deeply( [ flatten($_->[0], @{$_->[2]}) ], $_->[3], $_->[1]) for @tests;

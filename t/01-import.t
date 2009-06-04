@@ -3,11 +3,18 @@
 use strict;
 use warnings;
 
-use Test::More tests => 3;
+use Test::More tests => 2 * 3;
 
 require Sub::Prototype::Util;
 
-for (qw/flatten recall wrap/) {
- eval { Sub::Prototype::Util->import($_) };
- ok(!$@, 'import ' . $_);
+my %syms = (
+ flatten => undef,
+ recall  => undef,
+ wrap    => undef,
+);
+
+for (keys %syms) {
+ eval { Scope::Upper->import($_) };
+ is $@,            '',        "import $_";
+ is prototype($_), $syms{$_}, "prototype $_";
 }

@@ -3,25 +3,34 @@
 use strict;
 use warnings;
 
-use Test::More tests => 7 + 20 + (($^V ge v5.10.0) ? 4 : 0);
+use Test::More tests => 8 + 20 + (($^V ge v5.10.0) ? 4 : 0);
 
 use Scalar::Util qw/set_prototype/;
 use Sub::Prototype::Util qw/recall/;
 
+sub exception {
+ my ($msg) = @_;
+ $msg =~ s/\s+/\\s+/g;
+ return qr/^$msg.*?at\s+\Q$0\E\s+line\s+\d+/;
+}
+
 eval { recall undef };
-like($@, qr/^No\s+subroutine/, 'recall undef croaks');
+like $@, exception('No subroutine'), 'recall undef croaks';
 eval { recall '' };
-like($@, qr/^No\s+subroutine/, 'recall "" croaks');
+like $@, exception('No subroutine'), 'recall "" croaks';
 eval { recall \1 };
-like($@, qr/^Unhandled\s+SCALAR/, 'recall scalarref croaks');
+like $@, exception('Unhandled SCALAR'), 'recall scalarref croaks';
 eval { recall [ ] };
-like($@, qr/^Unhandled\s+ARRAY/, 'recall arrayref croaks');
+like $@, exception('Unhandled ARRAY'), 'recall arrayref croaks';
 eval { recall sub { } };
-like($@, qr/^Unhandled\s+CODE/, 'recall coderef croaks');
+like $@, exception('Unhandled CODE'), 'recall coderef croaks';
 eval { recall { 'foo' => undef, 'bar' => undef } };
-like($@, qr!exactly\s+one\s+key/value\s+pair!, 'recall hashref with 2 pairs croaks');
+like $@, qr!exactly\s+one\s+key/value\s+pair!,
+                                           'recall hashref with 2 pairs croaks';
 eval { recall 'hlagh' };
-like($@, qr/^Undefined\s+subroutine/, 'recall <unknown> croaks');
+like $@, qr/^Undefined\s+subroutine/, 'recall <unknown> croaks';
+eval { recall 'for' };
+like $@, exception('syntax error'), 'invalid eval code croaks';
 
 sub noproto { $_[1], $_[0] }
 sub mytrunc ($;$) { $_[1], $_[0] }

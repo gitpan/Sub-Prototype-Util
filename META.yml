@@ -1,20 +1,32 @@
 --- #YAML:1.0
-name:                Sub-Prototype-Util
-version:             0.08
-abstract:            Prototype-related utility routines.
-license:             perl
-author:              
+name:               Sub-Prototype-Util
+version:            0.09
+abstract:           Prototype-related utility routines.
+author:
     - Vincent Pit <perl@profvince.com>
-generated_by:        ExtUtils::MakeMaker version 6.44
-distribution_type:   module
-requires:     
-    Carp:                          0
-    Exporter:                      0
-    Scalar::Util:                  0
-meta-spec:
-    url:     http://module-build.sourceforge.net/META-spec-v1.3.html
-    version: 1.3
+license:            perl
+distribution_type:  module
+configure_requires:
+    ExtUtils::MakeMaker:  0
 build_requires:
-    ExtUtils::MakeMaker:           0
-    Scalar::Util:                  0
-    Test::More:                    0
+    ExtUtils::MakeMaker:  0
+    Scalar::Util:         0
+    Test::More:           0
+requires:
+    Carp:          0
+    Exporter:      0
+    perl:          5.006
+    Scalar::Util:  0
+resources:
+    bugtracker:  http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Sub-Prototype-Util
+    homepage:    http://search.cpan.org/dist/Sub-Prototype-Util/
+    license:     http://dev.perl.org/licenses/
+    repository:  http://git.profvince.com/?p=perl%2Fmodules%2FSub-Prototype-Util.git
+no_index:
+    directory:
+        - t
+        - inc
+generated_by:       ExtUtils::MakeMaker version 6.52
+meta-spec:
+    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
+    version:  1.4

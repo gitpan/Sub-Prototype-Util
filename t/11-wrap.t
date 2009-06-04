@@ -8,36 +8,44 @@ use Test::More tests => 7 + 6 + 3 + 1 + 6 + 1 + (($^V ge v5.10.0) ? 2 : 0) + 1;
 use Scalar::Util qw/set_prototype/;
 use Sub::Prototype::Util qw/wrap/;
 
+sub exception {
+ my ($msg) = @_;
+ $msg =~ s/\s+/\\s+/g;
+ return qr/^$msg.*?at\s+\Q$0\E\s+line\s+\d+/;
+}
+
 eval { wrap undef };
-like($@, qr/^No\s+subroutine/, 'recall undef croaks');
+like $@, exception('No subroutine'), 'recall undef croaks';
 eval { wrap '' };
-like($@, qr/^No\s+subroutine/, 'recall "" croaks');
+like $@, exception('No subroutine'), 'recall "" croaks';
 eval { wrap \1 };
-like($@, qr/^Unhandled\s+SCALAR/, 'recall scalarref croaks');
+like $@, exception('Unhandled SCALAR'), 'recall scalarref croaks';
 eval { wrap [ ] };
-like($@, qr/^Unhandled\s+ARRAY/, 'recall arrayref croaks');
+like $@, exception('Unhandled ARRAY'), 'recall arrayref croaks';
 eval { wrap sub { } };
-like($@, qr/^Unhandled\s+CODE/, 'recall coderef croaks');
+like $@, exception('Unhandled CODE'), 'recall coderef croaks';
 eval { wrap { 'foo' => undef, 'bar' => undef } };
-like($@, qr!exactly\s+one\s+key/value\s+pair!, 'recall hashref with 2 pairs croaks');
+like $@, qr!exactly\s+one\s+key/value\s+pair!,
+                                           'recall hashref with 2 pairs croaks';
 eval { wrap 'hlagh', qw/a b c/ };
-like($@, qr/^Optional\s+arguments/, 'recall takes options in a key => value list');
+like $@, exception('Optional arguments'),
+                                  'recall takes options in a key => value list';
 
 my $push_exp = '{ CORE::push(@{$_[0]}, @_[1..$#_]) }';
-my $push = wrap 'CORE::push';
+my $push = wrap 'CORE::push', compile => 0;
 is($push, 'sub ' . $push_exp, 'wrap push as a sub (default)');
-$push = wrap 'CORE::push', sub => 1;
+$push = wrap 'CORE::push', sub => 1, compile => 0;
 is($push, 'sub ' . $push_exp, 'wrap push as a sub');
 $push = wrap 'CORE::push', sub => 0;
 is($push, $push_exp, 'wrap push as a raw string');
-$push = wrap 'CORE::push', compile => 1;
+$push = wrap 'CORE::push';
 is(ref $push, 'CODE', 'wrap compiled push is a CODE reference');
 my @a = qw/a b/;
 my $ret = $push->(\@a, 7 .. 12);
 is_deeply(\@a, [ qw/a b/, 7 .. 12 ], 'wrap compiled push works');
 is($ret, 8, 'wrap compiled push returns the correct number of elements');
 
-my $push2 = wrap { 'CORE::push' => '\@;$' }, compile => 1;
+my $push2 = wrap { 'CORE::push' => '\@;$' };
 is(ref $push2, 'CODE', 'wrap compiled truncated push is a CODE reference');
 @a = qw/x y z/;
 $ret = $push2->(\@a, 3 .. 5);
@@ -95,8 +103,9 @@ SKIP: {
  skip 'perl 5.8.x is needed to test execution of \[$@] prototypes' => 6
    if $^V lt v5.8.0;
 
- my $cat = wrap 'main::cat', ref => 'main::myref', wrong_ref => 'die "hlagh"',
-                             sub => 1, compile => 1;
+ my $cat = wrap 'main::cat', ref => 'main::myref',
+                             sub => 1,
+                             wrong_ref => 'die "hlagh"',
  my @tests = (
   [ \'a',        \'b',        [ 'ab' ],        'scalar-scalar' ],
   [ \'c',        [ qw/d e/ ], [ qw/c d e/ ],   'scalar-array' ],
@@ -121,7 +130,7 @@ is($noproto, $noproto_exp, 'no prototype');
 sub myit { my $ar = shift; push @$ar, @_; };
 if ($^V ge v5.10.0) {
  set_prototype \&myit, '\@$_';
- my $it = wrap 'main::myit', compile => 1;
+ my $it = wrap 'main::myit';
  my @a = qw/u v w/;
  local $_ = 7;
  $it->(\@a, 3, 4, 5);
@@ -130,5 +139,7 @@ if ($^V ge v5.10.0) {
  is_deeply(\@a, [ qw/u v w/, 3, 4, 6, 7 ], '_ without arguments');
 }
 
-eval { wrap { 'main::dummy' => '\[@%]' }, ref => 'shift', compile => 1 };
-like($@, qr/to\s+shift\s+must\s+be\s+array/, 'invalid eval code croaks');
+eval { wrap { 'main::dummy' => '\[@%]' }, ref => 'shift' };
+like $@,
+       qr/to\s+shift\s+must\s+be\s+array +\([\w ]+\) +at\s+\Q$0\E\s+line\s+\d+/,
+                                                     'invalid eval code croaks';
