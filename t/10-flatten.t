@@ -5,7 +5,7 @@ use warnings;
 
 use Test::More tests => 27;
 
-use Sub::Prototype::Util qw/flatten/;
+use Sub::Prototype::Util qw<flatten>;
 
 sub exception {
  my ($msg) = @_;

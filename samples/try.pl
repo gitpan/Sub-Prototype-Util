@@ -5,11 +5,11 @@ use warnings;
 
 use Data::Dumper;
 
-use lib qw{blib/lib};
+use lib qw<blib/lib>;
 
-use Sub::Prototype::Util qw/flatten recall wrap/;
+use Sub::Prototype::Util qw<flatten recall wrap>;
 
-my @a = qw/a b c/;
+my @a = qw<a b c>;
 print "At the beginning, \@a contains :\n", Dumper(\@a);
 
 my @args = ( \@a, 1, { d => 2 }, undef, 3 );

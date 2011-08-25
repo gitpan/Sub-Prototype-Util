@@ -1,5 +1,14 @@
 Revision history for Sub-Prototype-Util
 
+0.10    2011-08-25 11:05 UTC
+        + Chg : recall() now uses "goto" to call the wrapper code (except for
+                perl 5.8.0).
+        + Chg : The internals sustained a large cleanup. This will hopefully
+                make it easier to understand and maintain.
+        + Fix : The functions of this module no longer clobber $@.
+        + Fix : Fix test failures on perl 5.8.0, and on perl 5.13.7 and above.
+        + Fix : Work around Kwalitee test misfailures.
+
 0.09    2009-06-04 22:45 UTC
         + Chg : recall() was reimplemented in terms of wrap().
         + Chg : "compile => 1" is now the default for wrap.

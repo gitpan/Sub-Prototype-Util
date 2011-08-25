@@ -2,12 +2,12 @@ NAME
     Sub::Prototype::Util - Prototype-related utility routines.
 
 VERSION
-    Version 0.09
+    Version 0.10
 
 SYNOPSIS
-        use Sub::Prototype::Util qw/flatten wrap recall/;
+        use Sub::Prototype::Util qw<flatten wrap recall>;
 
-        my @a = qw/a b c/;
+        my @a = qw<a b c>;
         my @args = ( \@a, 1, { d => 2 }, undef, 3 );
 
         my @flat = flatten '\@$;$', @args; # ('a', 'b', 'c', 1, { d => 2 })
@@ -54,7 +54,7 @@ FUNCTIONS
     "ref => $func"
         Specifies the function used in the generated code to test the
         reference type of scalars. Defaults to 'ref'. You may also want to
-        use "Scalar::Util::reftype".
+        use "reftype" in Scalar::Util.
 
     "wrong_ref => $code"
         The code executed when a reference of incorrect type is encountered.
@@ -118,7 +118,7 @@ SUPPORT
     <http://www.profvince.com/perl/cover/Sub-Prototype-Util>.
 
 COPYRIGHT & LICENSE
-    Copyright 2008-2009 Vincent Pit, all rights reserved.
+    Copyright 2008,2009,2010,2011 Vincent Pit, all rights reserved.
 
     This program is free software; you can redistribute it and/or modify it
     under the same terms as Perl itself.

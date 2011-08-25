@@ -3,10 +3,10 @@
 use strict;
 use warnings;
 
-use Test::More tests => 8 + 20 + (($^V ge v5.10.0) ? 4 : 0);
+use Test::More tests => 8 + 20 + (("$]" >= 5.010) ? 4 : 0);
 
-use Scalar::Util qw/set_prototype/;
-use Sub::Prototype::Util qw/recall/;
+use Scalar::Util;
+use Sub::Prototype::Util qw<recall>;
 
 sub exception {
  my ($msg) = @_;
@@ -56,8 +56,8 @@ my @tests = (
 );
 
 sub myit { push @{$_[0]->[2]}, 3; return 4 };
-if ($^V ge v5.10.0) {
- set_prototype \&myit, '_';
+if ("$]" >= 5.010) {
+ Scalar::Util::set_prototype(\&myit, '_');
  push @tests, [ 'main::myit', '_ with argument',
                 [ [ 1, 2, [ ] ], 5 ],
                 [ [ 1, 2, [ 3 ] ], 5 ],

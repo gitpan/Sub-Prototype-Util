@@ -5,8 +5,8 @@ use 5.006;
 use strict;
 use warnings;
 
-use Carp qw/croak/;
-use Scalar::Util qw/reftype/;
+use Carp         qw<croak>;
+use Scalar::Util qw<reftype>;
 
 =head1 NAME
 
@@ -14,19 +14,19 @@ Sub::Prototype::Util - Prototype-related utility routines.
 
 =head1 VERSION
 
-Version 0.09
+Version 0.10
 
 =cut
 
-use vars qw/$VERSION/;
+use vars qw<$VERSION>;
 
-$VERSION = '0.09';
+$VERSION = '0.10';
 
 =head1 SYNOPSIS
 
-    use Sub::Prototype::Util qw/flatten wrap recall/;
+    use Sub::Prototype::Util qw<flatten wrap recall>;
 
-    my @a = qw/a b c/;
+    my @a = qw<a b c>;
     my @args = ( \@a, 1, { d => 2 }, undef, 3 );
 
     my @flat = flatten '\@$;$', @args; # ('a', 'b', 'c', 1, { d => 2 })
@@ -45,25 +45,31 @@ They all handle C<5.10>'s C<_> prototype.
 
 =cut
 
-my %sigils = qw/SCALAR $ ARRAY @ HASH % GLOB * CODE &/;
+my %sigils   = qw<SCALAR $ ARRAY @ HASH % GLOB * CODE &>;
 my %reftypes = reverse %sigils;
 
 sub _check_ref {
- my ($a, $p) = @_;
- my $r;
- if (!defined $a || !defined($r = reftype $a)) { # not defined or plain scalar
-  croak 'Got ' . ((defined $a) ? 'a plain scalar' : 'undef')
-               . ' where a reference was expected';
+ my ($arg, $sigil) = @_;
+
+ my $reftype;
+ if (not defined $arg or not defined($reftype = reftype $arg)) {
+  # not defined or plain scalar
+  my $that = (defined $arg) ? 'a plain scalar' : 'undef';
+  croak "Got $that where a reference was expected";
  }
- croak 'Unexpected ' . $r . ' reference' unless exists $sigils{$r}
-                                            and $p =~ /\Q$sigils{$r}\E/;
- return $r;
+
+ croak "Unexpected $reftype reference" unless exists $sigils{$reftype}
+                                          and $sigil =~ /\Q$sigils{$reftype}\E/;
+
+ $reftype;
 }
 
 sub _clean_msg {
  my ($msg) = @_;
+
  $msg =~ s/(?:\s+called)?\s+at\s+.*$//s;
- return $msg;
+
+ $msg;
 }
 
 =head2 C<flatten $proto, @args>
@@ -76,26 +82,31 @@ It croaks if the arguments can't possibly match the required prototype, e.g. whe
 
 sub flatten {
  my $proto = shift;
+
  return @_ unless defined $proto;
- my @args; 
+
+ my @args;
  while ($proto =~ /(\\?)(\[[^\]]+\]|[^\];])/g) {
-  my $p = $2;
+  my $sigil = $2;
+
   if ($1) {
-   my $a = shift;
-   my $r = _check_ref $a, $p;
-   push @args, $r eq 'SCALAR'
-               ? $$a
-               : ($r eq 'ARRAY'
-                  ? @$a
-                  : ($r eq 'HASH'
-                     ? %$a
-                     : ($r eq 'GLOB'
-                        ? *$a
-                        : &$a # _check_ref ensures this must be a code ref
+   my $arg     = shift;
+   my $reftype = _check_ref $arg, $sigil;
+
+   push @args, $reftype eq 'SCALAR'
+               ? $$arg
+               : ($reftype eq 'ARRAY'
+                  ? @$arg
+                  : ($reftype eq 'HASH'
+                     ? %$arg
+                     : ($reftype eq 'GLOB'
+                        ? *$arg
+                        : &$arg # _check_ref ensures this must be a code ref
                        )
                     )
                  );
-  } elsif ($p =~ /[\@\%]/) {
+
+  } elsif ($sigil =~ /[\@\%]/) {
    push @args, @_;
    last;
   } else {
@@ -103,6 +114,7 @@ sub flatten {
    push @args, shift;
   }
  }
+
  return @args;
 }
 
@@ -129,7 +141,7 @@ Valid keys are :
 
 Specifies the function used in the generated code to test the reference type of scalars.
 Defaults to C<'ref'>.
-You may also want to use C<Scalar::Util::reftype>.
+You may also want to use L<Scalar::Util/reftype>.
 
 =item C<< wrong_ref => $code >>
 
@@ -158,52 +170,58 @@ For example, this allows you to recall into C<CORE::grep> and C<CORE::map> by us
 =cut
 
 sub _wrap {
- my ($name, $proto, $i, $args, $cr, $opts) = @_;
+ my ($name, $proto, $i, $args, $coderefs, $opts) = @_;
+
  while ($proto =~ s/(\\?)(\[[^\]]+\]|[^\];])//) {
-  my ($ref, $p) = ($1, $2);
-  $p = $1 if $p =~ /^\[([^\]]+)\]/;
-  my $cur = '$_[' . $i . ']';
+  my ($ref, $sigil) = ($1, $2);
+  $sigil = $1 if $sigil =~ /^\[([^\]]+)\]/;
+
+  my $cur = "\$_[$i]";
+
   if ($ref) {
-   if (length $p > 1) {
-    return 'my $r = ' . $opts->{ref} . '(' . $cur . '); ' 
-           . join ' els',
-              map( {
-               "if (\$r eq '" . $reftypes{$_} ."') { "
-               . _wrap($name, $proto, ($i + 1),
-                              $args . $_ . '{' . $cur . '}, ',
-                              $cr, $opts)
-               . ' }'
-              } split //, $p),
-              'e { ' . $opts->{wrong_ref} . ' }'
+   if (length $sigil > 1) {
+    my $code     = "my \$r = $opts->{ref}($cur); ";
+    my @branches = map {
+     my $subcall = _wrap(
+      $name, $proto, ($i + 1), $args . "$_\{$cur}, ", $coderefs, $opts
+     );
+     "if (\$r eq '$reftypes{$_}') { $subcall }";
+    } split //, $sigil;
+    $code .= join ' els', @branches, "e { $opts->{wrong_ref} }";
+    return $code;
    } else {
-    $args .= $p . '{' . $cur . '}, ';
+    $args .= "$sigil\{$cur}, ";
    }
-  } elsif ($p =~ /[\@\%]/) {
+  } elsif ($sigil =~ /[\@\%]/) {
    $args .= '@_[' . $i . '..$#_]';
-  } elsif ($p =~ /\&/) {
-   my %h = do { my $c; map { $_ => $c++ } @$cr };
+  } elsif ($sigil =~ /\&/) {
+   my %h = do { my $c; map { $_ => $c++ } @$coderefs };
    my $j;
-   if (not exists $h{$i}) {
-    push @$cr, $i;
-    $j = $#{$cr};
-   } else {
+   if (exists $h{$i}) {
     $j = int $h{$i};
+   } else {
+    push @$coderefs, $i;
+    $j = $#{$coderefs};
    }
-   $args .= 'sub{&{$c[' . $j . ']}}, ';
-  } elsif ($p eq '_') {
-   $args .= '((@_ > ' . $i . ') ? ' . $cur . ' : $_), ';
+   $args .= "sub{&{\$c[$j]}}, ";
+  } elsif ($sigil eq '_') {
+   $args .= "((\@_ > $i) ? $cur : \$_), ";
   } else {
-   $args .= $cur . ', ';
+   $args .= "$cur, ";
   }
+ } continue {
   ++$i;
  }
+
  $args =~ s/,\s*$//;
- return $name . '(' . $args . ')';
+
+ return "$name($args)";
 }
 
 sub _check_name {
- my $name = $_[0];
+ my ($name) = @_;
  croak 'No subroutine specified' unless $name;
+
  my $proto;
  my $r = ref $name;
  if (!$r) {
@@ -214,8 +232,10 @@ sub _check_name {
  } else {
   croak 'Unhandled ' . $r . ' reference as first argument';
  }
+
  $name =~ s/^\s+//;
  $name =~ s/[\s\$\@\%\*\&;].*//;
+
  return $name, $proto;
 }
 
@@ -223,28 +243,39 @@ sub wrap {
  my ($name, $proto) = _check_name shift;
  croak 'Optional arguments must be passed as key => value pairs' if @_ % 2;
  my %opts = @_;
+
  $opts{ref}     ||= 'ref';
- $opts{sub}       = 1       if not defined $opts{sub};
- $opts{compile}   = 1       if not defined $opts{compile} and $opts{sub};
- $opts{wrong_ref} = 'undef' if not defined $opts{wrong_ref};
- my @cr;
+ $opts{sub}       = 1       unless defined $opts{sub};
+ $opts{compile}   = 1       if     not defined $opts{compile} and $opts{sub};
+ $opts{wrong_ref} = 'undef' unless defined $opts{wrong_ref};
+
+ my @coderefs;
  my $call;
  if (defined $proto) {
-  $call = _wrap $name, $proto, 0, '', \@cr, \%opts;
+  $call = _wrap $name, $proto, 0, '', \@coderefs, \%opts;
  } else {
   $call = _wrap $name, '', 0, '@_';
  }
- if (@cr) {
-  $call = 'my @c; '
-        . join('', map { 'push @c, $_[' . $_ . ']; ' } @cr)
-        . $call
+
+ if (@coderefs) {
+  my $decls = @coderefs > 1 ? 'my @c = @_[' . join(', ', @coderefs) . ']; '
+                            : 'my @c = ($_[' . $coderefs[0] . ']); ';
+  $call = $decls . $call;
  }
- $call = '{ ' . $call . ' }';
- $call = 'sub ' . $call if $opts{sub};
+
+ $call = "{ $call }";
+ $call = "sub $call" if $opts{sub};
+
  if ($opts{compile}) {
-  $call = eval $call;
-  croak _clean_msg $@ if $@;
+  my $err;
+  {
+   local $@;
+   $call = eval $call;
+   $err  = $@;
+  }
+  croak _clean_msg $err if $err;
  }
+
  return $call;
 }
 
@@ -262,10 +293,36 @@ If you plan to recall several times, consider using L</wrap> instead.
 
 =cut
 
-sub recall {
- my $wrap = eval { wrap shift };
- croak _clean_msg $@ if $@;
- return $wrap->(@_);
+sub recall;
+
+BEGIN {
+ my $safe_wrap = sub {
+  my $name = shift;
+
+  my ($wrap, $err);
+  {
+   local $@;
+   $wrap = eval { wrap $name };
+   $err  = $@;
+  }
+
+  $wrap, $err;
+ };
+
+ if ("$]" == 5.008) {
+  # goto tends to crash a lot on perl 5.8.0
+  *recall = sub {
+   my ($wrap, $err) = $safe_wrap->(shift);
+   croak _clean_msg $err if $err;
+   $wrap->(@_)
+  }
+ } else {
+  *recall = sub {
+   my ($wrap, $err) = $safe_wrap->(shift);
+   croak _clean_msg $err if $err;
+   goto $wrap;
+  }
+ }
 }
 
 =head1 EXPORT
@@ -274,13 +331,13 @@ The functions L</flatten>, L</wrap> and L</recall> are only exported on request,
 
 =cut
 
-use base qw/Exporter/;
+use base qw<Exporter>;
 
-use vars qw/@EXPORT @EXPORT_OK %EXPORT_TAGS/;
+use vars qw<@EXPORT @EXPORT_OK %EXPORT_TAGS>;
 
 @EXPORT             = ();
 %EXPORT_TAGS        = (
- 'funcs' =>  [ qw/flatten wrap recall/ ]
+ 'funcs' =>  [ qw<flatten wrap recall> ]
 );
 @EXPORT_OK          = map { @$_ } values %EXPORT_TAGS;
 $EXPORT_TAGS{'all'} = [ @EXPORT_OK ];
@@ -310,7 +367,7 @@ Tests code coverage report is available at L<http://www.profvince.com/perl/cover
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2008-2009 Vincent Pit, all rights reserved.
+Copyright 2008,2009,2010,2011 Vincent Pit, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
