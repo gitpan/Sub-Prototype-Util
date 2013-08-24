@@ -11,7 +11,3 @@ t/01-import.t
 t/10-flatten.t
 t/11-wrap.t
 t/12-recall.t
-t/91-pod.t
-t/92-pod-coverage.t
-t/95-portability-files.t
-t/99-kwalitee.t

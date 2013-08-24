@@ -31,8 +31,8 @@ eval { wrap 'hlagh', qw<a b c> };
 like $@, exception('Optional arguments'),
                                   'recall takes options in a key => value list';
 
-my $push_exp = "$]" >= 5.013007 ? '{ CORE::push($_[0], @_[1..$#_]) }'
-                                : '{ CORE::push(@{$_[0]}, @_[1..$#_]) }';
+my $push_exp = "$]" >= 5.013_007 ? '{ CORE::push($_[0], @_[1..$#_]) }'
+                                 : '{ CORE::push(@{$_[0]}, @_[1..$#_]) }';
 my $push = wrap 'CORE::push', compile => 0;
 is($push, 'sub ' . $push_exp, 'wrap push as a sub (default)');
 $push = wrap 'CORE::push', sub => 1, compile => 0;
